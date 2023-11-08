@@ -1,3 +1,8 @@
+"""
+The configurations for NEAT
+taken from Tech with Tim
+"""
+
 [NEAT]
 fitness_criterion     = max
 fitness_threshold     = 100
@@ -76,4 +81,4 @@ species_elitism      = 2
 
 [DefaultReproduction]
 elitism            = 2
-survival_threshold = 0.1
+survival_threshold = 0.2
