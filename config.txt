@@ -1,6 +1,8 @@
 """
 The configurations for NEAT
-taken from Tech with Tim
+taken from Tech with Tim tutorial
+
+Date Modified:  Nov 7, 2023
 """
 
 [NEAT]
