@@ -3,7 +3,7 @@ import pygame
 
 SCREEN_HEIGHT = 512
 SCREEN_WIDTH = 288
-SCROLL_SPEED = 2
+SCROLL_SPEED = 2 #Controlls how fast the pipes come at the birds 2 feels most like traditional flappy bird
 
 class Bird(pygame.sprite.Sprite):
     def __init__(self):
