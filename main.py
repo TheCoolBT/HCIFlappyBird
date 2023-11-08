@@ -1,3 +1,11 @@
+"""
+A game of flappy bird made with pygame
+
+Date Modified:  Nov 7, 2023
+Author: Ben Tyler
+Estimated Work Time: 20 Hours
+"""
+
 import os.path
 import neat
 import pygame
@@ -51,14 +59,13 @@ def check_collison(bird, pipes):
 
 
 def calculate_inputs(bird, pipes):
-    MOE = 30 # Margin of error, the lower the number the greater leanience for Bird to get rewarded
     for pipe in pipes:
         # Since pipes are moving left, we find the set of pipes that are coming next
         if pipe.rect.right > bird.rect.left:
             bottom_edge_of_gap = pipe.rect.top  # The top of the bottom pipe
-            top_edge_of_gap = bottom_edge_of_gap - Pipe.GAP_SIZE
-            vertical_distance = bird.rect.top
-            velocity = bird.velocity
+            top_edge_of_gap = bottom_edge_of_gap - Pipe.GAP_SIZE # The bottom of the top piper
+            vertical_distance = bird.rect.top # The y value of the bird's height
+            velocity = bird.velocity 
 
 
             # Calculate vertical distances
@@ -66,16 +73,17 @@ def calculate_inputs(bird, pipes):
             vertical_distance_top_of_bottom_pipe = bottom_edge_of_gap - bird.rect.bottom
 
             return vertical_distance_bottom_of_top_pipe, vertical_distance_top_of_bottom_pipe, vertical_distance,velocity
-            #return top_edge_of_gap, bottom_edge_of_gap, vertical_distance, velocity
+            
 
-    # If there are no pipes on screen, return some default distances
+    # If there are no pipes on screen, will compare to dummy pipe that is perfectly centered
     distance_from_top_default_pipe = bird.rect.top - 180
     distance_from_bottom_default_pipe = 250 - bird.rect.bottom
     return distance_from_top_default_pipe,distance_from_bottom_default_pipe, bird.rect.top, bird.velocity
-    #return 150, 250, bird.rect.bottom, bird.velocity
+    
 
 
 def calculate_fitness_reward(bird, pipes):
+    #This function can be used later to make the birds so smart that they perfect the game after 1 generation
     for pipe in pipes:
         bird_center_y = bird.rect.centery
         if pipe.rect.right > bird.rect.left:
@@ -142,15 +150,16 @@ def fitness_function(genomes, config):
         for x, bird in enumerate(birds):
             # give reward for remaining between the next 2 pipes
             distances = calculate_inputs(bird,pipe_group)
+            
             ge[x].fitness += 0.1
+
+            #If you want the birds to enter "god-mode" replace ge[x].fitness += 0.1 with:
             #if distances[0] > 0 and distances[1] > 0:
-                #ge[x].fitness += 0.1
+                #ge[x].fitness += calculate_fitness_reward(bird, pipe_group) 
 
             output = nets[birds.index(bird)].activate(calculate_inputs(bird, pipe_group))
             if output[0] > 0.8:
                 bird.jump()
-
-
 
         # Handle Collison
         for x, bird in enumerate(birds):
@@ -212,78 +221,6 @@ def fitness_function(genomes, config):
         pygame.display.update()
 
 
-def fitness_function_no_rendering(genomes, config):
-    global last_pipe_time, score, gen
-    nets = []
-    ge = []
-    birds = []
-
-    score = 0
-    gen += 1
-
-    for _, g in genomes:
-        net = neat.nn.FeedForwardNetwork.create(g, config)
-        nets.append(net)
-        new_bird = Bird()
-        birds.append(new_bird)
-        g.fitness = 0
-        g.streak = 0.1
-        ge.append(g)
-
-    running = True
-    while running and len(birds) > 0:
-        # No clock tick here because we are not limiting the FPS
-        event_list = pygame.event.get()
-
-        # Handle game logic without rendering
-        for x, bird in enumerate(birds):
-            ge[x].fitness += ge[x].streak
-            output = nets[x].activate(calculate_inputs(bird, pipe_group))
-            if output[0] > 0.8:
-                bird.jump()
-
-        # Handle collisions without rendering
-        for x, bird in enumerate(birds):
-            if check_collison(bird, pipe_group) or bird.rect.bottom >= SCREEN_HEIGHT - 112 or bird.rect.y < -50:
-                ge[x].fitness -= 1
-                birds[x] = None
-                nets[x] = None
-                ge[x] = None
-
-        # Clean up the lists to remove None values after collisions
-        birds = [b for b in birds if b is not None]
-        nets = [n for n in nets if n is not None]
-        ge = [g for g in ge if g is not None]
-
-        # Pipe logic without rendering
-        time_now = pygame.time.get_ticks()
-        if time_now - last_pipe_time > PIPE_SPAWN_TIME:
-            pipe_group.add(*Pipe.create_pipe_pair(Pipe))
-            last_pipe_time = time_now
-
-        for pipe in pipe_group:
-            for x, bird in enumerate(birds):
-                if pipe.rect.right < bird.rect.right and not pipe.passed:
-                    score += 0.5
-                    ge[x].fitness += 5
-                    ge[x].streak += 0.1
-                    pipe.passed = True
-
-        # Game logic updates without rendering
-        for bird in birds:
-            bird.update(event_list)  # Pass None or an empty list for the event_list
-        pipe_group.update()
-        floor_group.update()
-
-        # The birds, pipes, and floor are not drawn and the screen is not updated
-
-def eval_genomes (genomes, config, render = False):
-    if render:
-        fitness_function(genomes,config)
-    else:
-        fitness_function_no_rendering(genomes,config)
-
-
 
 def run(config_path):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -296,24 +233,9 @@ def run(config_path):
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
-    winner = p.run(fitness_function, 1000000)
+    winner = p.run(fitness_function, 10) #run for 10 generations
 
-    # show final stats
     print('\nBest genome:\n{!s}'.format(winner))
-
-    # # Determine which generations to display
-    # display_generations = [i for i in range(0, 10000000, 10)]
-    #
-    # for gen in range(10000000):
-    #       genomes = list(p.population.items())
-    #       config = p.config
-    #
-    #       if gen in display_generations:
-    #           eval_genomes(genomes, config, render=True)
-    #       else:
-    #           eval_genomes(genomes, config, render=False)
-
-
 
 
 
