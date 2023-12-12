@@ -99,6 +99,27 @@ def calculate_fitness_reward(bird, pipes):
     return 0
 
 
+# Function to save the data from the birds to a CSV file to be analyzed, shows Generation, GenomeID, Fitness, and the weights in the neural network
+def save_genome_data(genomes, generation):
+    file_exists = os.path.isfile('flappy_bird_genome_data.csv')
+
+    with open('flappy_bird_genome_data.csv', mode='a', newline='') as file:
+        writer = csv.writer(file)
+
+        # Write headers only if the file doesn't exist
+        if not file_exists:
+            headers = ['Generation', 'Genome ID', 'Fitness']
+            max_weights = max(len(genome.connections.values()) for _, genome in genomes)
+            weight_headers = [f'Weight {i+1}' for i in range(max_weights)]
+            writer.writerow(headers + weight_headers)
+
+        # Write data
+        for genome_id, genome in genomes:
+            weights = [conn.weight for conn in genome.connections.values()]
+            fitness = genome.fitness
+            writer.writerow([generation, genome_id, fitness] + weights)
+
+
 
 
 
@@ -219,6 +240,7 @@ def fitness_function(genomes, config):
 
         # Update the display
         pygame.display.update()
+    save_genome_data(genomes, gen)
 
 
 
